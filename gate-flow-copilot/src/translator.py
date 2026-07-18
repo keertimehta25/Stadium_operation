@@ -11,13 +11,16 @@ from typing import Any
 
 from google import genai
 
-from src.config import SUPPORTED_LANGUAGES, get_api_key
+from src.config import GENAI_MODEL, SUPPORTED_LANGUAGES, get_api_key
 
 # Cache of (source_text, target_language) -> translated text. The same
 # recommendation string is often requested repeatedly within a short
 # window (e.g. the frontend polling /api/status every few seconds while
 # gate density hasn't changed enough to alter the recommendation), so
 # caching avoids paying for and waiting on a duplicate Gemini call.
+# Bounded so a long-running server process can't grow this dict without
+# limit as gate states drift over a matchday.
+_CACHE_MAX_SIZE = 500
 _translation_cache: dict[tuple[str, str], str] = {}
 
 
@@ -48,7 +51,7 @@ def _translate_text(text: str, target_language: str) -> str:
         f"---\n{text}\n---"
     )
     response: Any = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=GENAI_MODEL,
         contents=prompt,
     )
 
@@ -83,6 +86,8 @@ def translate_recommendation(
             return language, _translation_cache[cache_key]
         try:
             text = _translate_text(recommendation, language)
+            if len(_translation_cache) >= _CACHE_MAX_SIZE:
+                _translation_cache.pop(next(iter(_translation_cache)))
             _translation_cache[cache_key] = text
             return language, text
         except Exception:  # pylint: disable=broad-exception-caught

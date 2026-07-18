@@ -17,7 +17,7 @@ from typing import Any
 
 from google import genai
 
-from src.config import STADIUM_NAME, get_api_key
+from src.config import GENAI_MODEL, STADIUM_NAME, get_api_key
 
 MAX_QUESTION_LENGTH = 300
 
@@ -117,7 +117,7 @@ def _call_genai(prompt: str) -> str:
     """
     client: Any = genai.Client(api_key=get_api_key())
     response: Any = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=GENAI_MODEL,
         contents=prompt,
     )
     if not response or not response.text:

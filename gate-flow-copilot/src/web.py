@@ -20,7 +20,7 @@ from src.crowd_simulator import GateStatus, simulate_gate_densities
 from src.fan_assistant import recommend_gate_for_section
 from src.navigation_assistant import find_pois, get_directions
 from src.recommender import get_recommendation
-from src.sustainibility import simulate_bin_levels, sustainability_tip
+from src.sustainability import simulate_bin_levels, sustainability_tip
 from src.translator import translate_recommendation
 from src.transport_assistant import recommend_transport
 

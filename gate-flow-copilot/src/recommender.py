@@ -14,7 +14,7 @@ from typing import Any
 
 from google import genai
 
-from src.config import DENSITY_LOW, DENSITY_MODERATE, STADIUM_NAME, get_api_key
+from src.config import DENSITY_LOW, DENSITY_MODERATE, GENAI_MODEL, STADIUM_NAME, get_api_key
 from src.crowd_simulator import GateStatus
 
 # ---------------------------------------------------------------------------
@@ -120,7 +120,10 @@ def fallback_recommendation(gate_statuses: list[GateStatus]) -> str:
 # GenAI API call (cached per gate-state fingerprint)
 # ---------------------------------------------------------------------------
 
-# Module-level cache: maps state fingerprint → recommendation text
+# Module-level cache: maps state fingerprint → recommendation text.
+# Bounded so a long-running server process (gate densities change on
+# every simulation tick) can't grow this dict without limit.
+_CACHE_MAX_SIZE = 500
 _recommendation_cache: dict[str, str] = {}
 
 
@@ -138,7 +141,7 @@ def _call_genai(prompt: str) -> str:
     """
     client: Any = genai.Client(api_key=get_api_key())
     response: Any = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=GENAI_MODEL,
         contents=prompt,
     )
 
@@ -181,6 +184,8 @@ def get_recommendation(gate_statuses: list[GateStatus]) -> str:
             + fallback_recommendation(gate_statuses)
         )
 
+    if len(_recommendation_cache) >= _CACHE_MAX_SIZE:
+        _recommendation_cache.pop(next(iter(_recommendation_cache)))
     _recommendation_cache[fingerprint] = recommendation
     return recommendation
 

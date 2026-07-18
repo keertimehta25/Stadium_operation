@@ -16,6 +16,12 @@ from dotenv import load_dotenv
 load_dotenv()  # reads .env in the project root
 
 
+# GenAI model used by every assistant module. Centralised so an upgrade
+# (e.g. to a newer Gemini version) is a one-line change instead of a
+# four-file find-and-replace.
+GENAI_MODEL: str = "gemini-2.0-flash"
+
+
 def get_api_key() -> str:
     """Return the GenAI API key from the environment.
 

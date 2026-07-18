@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.sustainibility import BinStatus, simulate_bin_levels, sustainability_tip
+from src.sustainability import BinStatus, simulate_bin_levels, sustainability_tip
 
 
 class TestSimulateBinLevels:

@@ -14,7 +14,7 @@ from typing import Any
 
 from google import genai
 
-from src.config import SECTIONS, STADIUM_NAME, get_api_key
+from src.config import GENAI_MODEL, SECTIONS, STADIUM_NAME, get_api_key
 from src.crowd_simulator import GateStatus
 
 
@@ -235,7 +235,7 @@ def _call_genai(prompt: str) -> str:
     """
     client: Any = genai.Client(api_key=get_api_key())
     response: Any = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=GENAI_MODEL,
         contents=prompt,
     )
     if not response or not response.text:
