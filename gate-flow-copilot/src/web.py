@@ -6,6 +6,7 @@ business logic lives here.
 """
 
 from __future__ import annotations
+
 import os
 
 from flask import Flask, jsonify, request
@@ -20,8 +21,8 @@ from src.fan_assistant import recommend_gate_for_section
 from src.navigation_assistant import find_pois, get_directions
 from src.recommender import get_recommendation
 from src.sustainibility import simulate_bin_levels, sustainability_tip
-from src.transport_assistant import recommend_transport
 from src.translator import translate_recommendation
+from src.transport_assistant import recommend_transport
 
 app = Flask(__name__)
 
@@ -70,9 +71,7 @@ def _clean_text(raw: str, max_length: int) -> str:
 
 def build_snapshot(minutes: int, seed: int | None) -> dict:
     """Assemble a JSON-serialisable gate-status + recommendation snapshot."""
-    statuses: list[GateStatus] = simulate_gate_densities(
-        minutes_to_kickoff=minutes, seed=seed
-    )
+    statuses: list[GateStatus] = simulate_gate_densities(minutes_to_kickoff=minutes, seed=seed)
     recommendation: str = get_recommendation(statuses)
     translations: dict[str, str] = translate_recommendation(recommendation)
     return {
@@ -139,13 +138,12 @@ def api_sustainability():
     """Return current bin fill levels and a sustainability tip."""
     seed = request.args.get("seed", default=None, type=int)
     statuses = simulate_bin_levels(seed)
-    return jsonify({
-        "bins": [
-            {"zone": s.zone, "type": s.bin_type, "fill": s.fill_pct}
-            for s in statuses
-        ],
-        "tip": sustainability_tip(statuses),
-    })
+    return jsonify(
+        {
+            "bins": [{"zone": s.zone, "type": s.bin_type, "fill": s.fill_pct} for s in statuses],
+            "tip": sustainability_tip(statuses),
+        }
+    )
 
 
 @app.get("/api/pois")
@@ -153,16 +151,18 @@ def api_pois():
     """Return points of interest (restrooms, medical, elevators, etc.)."""
     category = request.args.get("category", default=None, type=str)
     pois = find_pois(category)
-    return jsonify([
-        {
-            "name": p.name,
-            "category": p.category,
-            "nearest_gate": p.nearest_gate,
-            "zone": p.zone,
-            "notes": p.notes,
-        }
-        for p in pois
-    ])
+    return jsonify(
+        [
+            {
+                "name": p.name,
+                "category": p.category,
+                "nearest_gate": p.nearest_gate,
+                "zone": p.zone,
+                "notes": p.notes,
+            }
+            for p in pois
+        ]
+    )
 
 
 @app.get("/api/navigate")

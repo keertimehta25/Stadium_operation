@@ -20,10 +20,10 @@ from src.recommender import (
     get_recommendation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def low_density_statuses() -> list[GateStatus]:
@@ -35,10 +35,7 @@ def low_density_statuses() -> list[GateStatus]:
 def mixed_density_statuses() -> list[GateStatus]:
     """Mix of congested and low-density gates."""
     densities = [85.0, 30.0, 75.0, 20.0, 90.0, 15.0]
-    return [
-        GateStatus(gate=g, density_pct=d)
-        for g, d in zip(GATES, densities)
-    ]
+    return [GateStatus(gate=g, density_pct=d) for g, d in zip(GATES, densities)]
 
 
 @pytest.fixture(autouse=True)
@@ -51,35 +48,28 @@ def _clear_cache() -> None:
 # build_prompt
 # ---------------------------------------------------------------------------
 
+
 class TestBuildPrompt:
     """Tests for prompt construction."""
 
-    def test_contains_stadium_name(
-        self, low_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_contains_stadium_name(self, low_density_statuses: list[GateStatus]) -> None:
         """Prompt should mention the stadium."""
         prompt: str = build_prompt(low_density_statuses)
         assert "MetLife Stadium" in prompt
 
-    def test_contains_all_gates(
-        self, low_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_contains_all_gates(self, low_density_statuses: list[GateStatus]) -> None:
         """Every configured gate should appear in the prompt."""
         prompt: str = build_prompt(low_density_statuses)
         for gate in GATES:
             assert gate.name in prompt
 
-    def test_contains_density_values(
-        self, mixed_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_contains_density_values(self, mixed_density_statuses: list[GateStatus]) -> None:
         """Prompt should include numeric density percentages."""
         prompt: str = build_prompt(mixed_density_statuses)
         assert "85.0" in prompt
         assert "30.0" in prompt
 
-    def test_asks_for_reasoning(
-        self, low_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_asks_for_reasoning(self, low_density_statuses: list[GateStatus]) -> None:
         """Prompt should request reasoning in the recommendation."""
         prompt: str = build_prompt(low_density_statuses)
         assert "why" in prompt.lower()
@@ -89,12 +79,11 @@ class TestBuildPrompt:
 # _state_fingerprint
 # ---------------------------------------------------------------------------
 
+
 class TestStateFingerprint:
     """Tests for caching fingerprint."""
 
-    def test_same_input_same_hash(
-        self, low_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_same_input_same_hash(self, low_density_statuses: list[GateStatus]) -> None:
         """Identical statuses should produce identical fingerprints."""
         fp_a = _state_fingerprint(low_density_statuses)
         fp_b = _state_fingerprint(low_density_statuses)
@@ -115,26 +104,21 @@ class TestStateFingerprint:
 # fallback_recommendation
 # ---------------------------------------------------------------------------
 
+
 class TestFallbackRecommendation:
     """Tests for the rule-based fallback."""
 
-    def test_no_congestion_says_ok(
-        self, low_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_no_congestion_says_ok(self, low_density_statuses: list[GateStatus]) -> None:
         """When nothing is congested, say so."""
         result: str = fallback_recommendation(low_density_statuses)
         assert "no redirection" in result.lower()
 
-    def test_congested_lists_gates(
-        self, mixed_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_congested_lists_gates(self, mixed_density_statuses: list[GateStatus]) -> None:
         """Congested gates should be named in the fallback."""
         result: str = fallback_recommendation(mixed_density_statuses)
         assert "Gate A" in result  # 85 % → congested
 
-    def test_suggests_redirect_target(
-        self, mixed_density_statuses: list[GateStatus]
-    ) -> None:
+    def test_suggests_redirect_target(self, mixed_density_statuses: list[GateStatus]) -> None:
         """Low-density gates should be suggested as redirect targets."""
         result: str = fallback_recommendation(mixed_density_statuses)
         assert "redirect" in result.lower()
@@ -143,6 +127,7 @@ class TestFallbackRecommendation:
 # ---------------------------------------------------------------------------
 # get_recommendation (with mocked API)
 # ---------------------------------------------------------------------------
+
 
 class TestGetRecommendation:
     """Tests for the main recommendation function (API mocked)."""

@@ -33,14 +33,62 @@ class PointOfInterest:
 
 
 POINTS_OF_INTEREST: tuple[PointOfInterest, ...] = (
-    PointOfInterest("First Aid Station – East", "medical", "Gate A", "East – Lower Level", "Staffed at all times on matchday."),
-    PointOfInterest("First Aid Station – West", "medical", "Gate B", "West – Lower Level", "Staffed at all times on matchday."),
-    PointOfInterest("Guest Services Desk", "guest_services", "Gate E", "Northeast – Club", "Lost & found, accessibility support."),
-    PointOfInterest("Accessible Restroom – North", "restroom", "Gate C", "North – Upper Level", "Wheelchair accessible, baby-changing table."),
-    PointOfInterest("Accessible Restroom – South", "restroom", "Gate D", "South – Upper Level", "Wheelchair accessible, baby-changing table."),
-    PointOfInterest("Main Concourse Food Court", "concession", "Gate B", "West – Lower Level", "Halal, vegetarian, and allergen-labelled options."),
-    PointOfInterest("Elevator Bank – Club", "elevator", "Gate E", "Northeast – Club", "Direct access to Club and Suite levels."),
-    PointOfInterest("Elevator Bank – Upper", "elevator", "Gate C", "North – Upper Level", "Direct access to Upper Level sections."),
+    PointOfInterest(
+        "First Aid Station – East",
+        "medical",
+        "Gate A",
+        "East – Lower Level",
+        "Staffed at all times on matchday.",
+    ),
+    PointOfInterest(
+        "First Aid Station – West",
+        "medical",
+        "Gate B",
+        "West – Lower Level",
+        "Staffed at all times on matchday.",
+    ),
+    PointOfInterest(
+        "Guest Services Desk",
+        "guest_services",
+        "Gate E",
+        "Northeast – Club",
+        "Lost & found, accessibility support.",
+    ),
+    PointOfInterest(
+        "Accessible Restroom – North",
+        "restroom",
+        "Gate C",
+        "North – Upper Level",
+        "Wheelchair accessible, baby-changing table.",
+    ),
+    PointOfInterest(
+        "Accessible Restroom – South",
+        "restroom",
+        "Gate D",
+        "South – Upper Level",
+        "Wheelchair accessible, baby-changing table.",
+    ),
+    PointOfInterest(
+        "Main Concourse Food Court",
+        "concession",
+        "Gate B",
+        "West – Lower Level",
+        "Halal, vegetarian, and allergen-labelled options.",
+    ),
+    PointOfInterest(
+        "Elevator Bank – Club",
+        "elevator",
+        "Gate E",
+        "Northeast – Club",
+        "Direct access to Club and Suite levels.",
+    ),
+    PointOfInterest(
+        "Elevator Bank – Upper",
+        "elevator",
+        "Gate C",
+        "North – Upper Level",
+        "Direct access to Upper Level sections.",
+    ),
 )
 
 
@@ -93,7 +141,10 @@ def _congestion_note(destination_zone: str, gate_statuses: list[GateStatus] | No
         return ""
     for status in gate_statuses:
         if status.gate.name in destination_zone:
-            return f"{status.gate.name} is currently {status.label} ({status.density_pct:.0f}% capacity)."
+            return (
+                f"{status.gate.name} is currently {status.label} "
+                f"({status.density_pct:.0f}% capacity)."
+            )
     return ""
 
 
@@ -126,7 +177,9 @@ def build_prompt(
         f"\n\nLive crowd data: {congestion} If this gate is at High "
         "capacity, briefly suggest the fan expect a short wait or use "
         "a nearby alternate entrance if one is reasonable; otherwise "
-        "just proceed normally." if congestion else ""
+        "just proceed normally."
+        if congestion
+        else ""
     )
     return (
         f"You are a wayfinding assistant at {STADIUM_NAME}. "
@@ -222,7 +275,11 @@ def get_directions(
     prompt = build_prompt(start, destination, destination_zone, gate_statuses)
     try:
         directions = _call_genai(prompt)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Intentionally broad: any GenAI failure (network, auth, quota,
+        # malformed response, ...) must degrade to the deterministic
+        # fallback rather than surface to the fan, so the feature never
+        # goes dark. See module docstring.
         directions = fallback_navigation(start, destination, destination_zone, gate_statuses)
 
     return {

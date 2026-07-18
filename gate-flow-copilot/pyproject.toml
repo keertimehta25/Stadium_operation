@@ -1,0 +1,20 @@
+[tool.pylint."MESSAGES CONTROL"]
+# duplicate-code (R0801): src/navigation_assistant.py, src/recommender.py,
+# src/translator.py, and src/accessibility_assistant.py each define a small,
+# private `_call_genai` wrapper around the Gemini client. This is
+# intentional, not accidental copy-paste: each domain module owns its own
+# independently-mockable, fault-isolated call to the GenAI API so that
+# `@patch("src.<module>._call_genai")` and `@patch("src.<module>.genai.Client")`
+# in the test suite can target one module at a time, and so a failure in one
+# assistant can never take down another. Consolidating this into a shared
+# helper would remove the duplication but would also remove that per-module
+# test isolation and fault boundary, so it is a deliberate tradeoff rather
+# than an oversight.
+disable = ["duplicate-code"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100

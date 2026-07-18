@@ -14,18 +14,13 @@ from typing import Any
 
 from google import genai
 
-from src.config import (
-    DENSITY_LOW,
-    DENSITY_MODERATE,
-    STADIUM_NAME,
-    get_api_key,
-)
+from src.config import DENSITY_LOW, DENSITY_MODERATE, STADIUM_NAME, get_api_key
 from src.crowd_simulator import GateStatus
-
 
 # ---------------------------------------------------------------------------
 # Prompt construction (pure, testable)
 # ---------------------------------------------------------------------------
+
 
 def build_prompt(gate_statuses: list[GateStatus]) -> str:
     """Create a structured prompt describing current gate conditions.
@@ -82,6 +77,7 @@ def _state_fingerprint(gate_statuses: list[GateStatus]) -> str:
 # Rule-based fallback (no API needed)
 # ---------------------------------------------------------------------------
 
+
 def fallback_recommendation(gate_statuses: list[GateStatus]) -> str:
     """Generate a simple rule-based recommendation without calling GenAI.
 
@@ -93,12 +89,8 @@ def fallback_recommendation(gate_statuses: list[GateStatus]) -> str:
     Returns:
         A plain-language fallback recommendation string.
     """
-    congested: list[GateStatus] = [
-        s for s in gate_statuses if s.density_pct > DENSITY_MODERATE
-    ]
-    available: list[GateStatus] = [
-        s for s in gate_statuses if s.density_pct <= DENSITY_LOW
-    ]
+    congested: list[GateStatus] = [s for s in gate_statuses if s.density_pct > DENSITY_MODERATE]
+    available: list[GateStatus] = [s for s in gate_statuses if s.density_pct <= DENSITY_LOW]
 
     if not congested:
         return (
@@ -118,8 +110,7 @@ def fallback_recommendation(gate_statuses: list[GateStatus]) -> str:
         parts.append(f"\n→ Please redirect fans to: {names}.")
     else:
         parts.append(
-            "\n→ No gates are at low density. "
-            "Ask your coordinator for additional guidance."
+            "\n→ No gates are at low density. Ask your coordinator for additional guidance."
         )
 
     return "\n".join(parts)
@@ -182,8 +173,9 @@ def get_recommendation(gate_statuses: list[GateStatus]) -> str:
 
     try:
         recommendation: str = _call_genai(prompt)
-    except Exception:
-        # Graceful degradation — never crash on API issues
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Graceful degradation — never crash on API issues. Broad on
+        # purpose: any GenAI failure mode should fall back, not surface.
         recommendation = (
             "[AI unavailable — using rule-based fallback]\n\n"
             + fallback_recommendation(gate_statuses)

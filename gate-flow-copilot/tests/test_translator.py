@@ -13,13 +13,13 @@ from src.translator import (
     translate_recommendation,
 )
 
-
 SAMPLE_RECOMMENDATION: str = "Please redirect fans from Gate A to Gate D."
 
 
 # ---------------------------------------------------------------------------
 # translate_recommendation
 # ---------------------------------------------------------------------------
+
 
 class TestTranslateRecommendation:
     """Tests for multi-language translation."""
@@ -33,9 +33,7 @@ class TestTranslateRecommendation:
         assert result["English"] == SAMPLE_RECOMMENDATION
 
     @patch("src.translator._translate_text")
-    def test_includes_secondary_languages(
-        self, mock_translate: MagicMock
-    ) -> None:
+    def test_includes_secondary_languages(self, mock_translate: MagicMock) -> None:
         """Should attempt Spanish and French translations."""
         mock_translate.return_value = "Translated text."
         result: dict[str, str] = translate_recommendation(SAMPLE_RECOMMENDATION)
@@ -46,18 +44,14 @@ class TestTranslateRecommendation:
         "src.translator._translate_text",
         side_effect=RuntimeError("API error"),
     )
-    def test_graceful_on_translation_failure(
-        self, mock_translate: MagicMock
-    ) -> None:
+    def test_graceful_on_translation_failure(self, mock_translate: MagicMock) -> None:
         """If translation fails, English must still be returned."""
         result: dict[str, str] = translate_recommendation(SAMPLE_RECOMMENDATION)
         assert "English" in result
         assert len(result) >= 1
 
     @patch("src.translator._translate_text")
-    def test_does_not_translate_english_to_english(
-        self, mock_translate: MagicMock
-    ) -> None:
+    def test_does_not_translate_english_to_english(self, mock_translate: MagicMock) -> None:
         """Should not call the API to translate English → English."""
         mock_translate.return_value = "Dummy."
         translate_recommendation(SAMPLE_RECOMMENDATION)
@@ -68,6 +62,7 @@ class TestTranslateRecommendation:
 # ---------------------------------------------------------------------------
 # format_multilingual_output
 # ---------------------------------------------------------------------------
+
 
 class TestFormatMultilingualOutput:
     """Tests for terminal formatting."""

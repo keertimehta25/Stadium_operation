@@ -8,17 +8,16 @@ lives in the domain modules.
 from __future__ import annotations
 
 import argparse
-import sys
 
 from src.config import STADIUM_NAME
 from src.crowd_simulator import GateStatus, simulate_gate_densities
 from src.recommender import get_recommendation
 from src.translator import format_multilingual_output, translate_recommendation
 
-
 # ---------------------------------------------------------------------------
 # Display helpers (presentation only — no business logic)
 # ---------------------------------------------------------------------------
+
 
 def _render_gate_table(statuses: list[GateStatus]) -> str:
     """Format gate statuses as a compact ASCII table.
@@ -33,12 +32,12 @@ def _render_gate_table(statuses: list[GateStatus]) -> str:
     separator: str = "─" * len(header)
     rows: list[str] = [separator, header, separator]
 
-    for s in statuses:
-        bar_len: int = int(s.density_pct / 5)
-        bar: str = "█" * bar_len + "░" * (20 - bar_len)
+    for status in statuses:
+        bar_len: int = int(status.density_pct / 5)
+        density_bar: str = "█" * bar_len + "░" * (20 - bar_len)
         rows.append(
-            f"{s.gate.name:<12} {s.gate.zone:<28} "
-            f"{s.density_pct:>6.1f} %  {bar} {s.label}"
+            f"{status.gate.name:<12} {status.gate.zone:<28} "
+            f"{status.density_pct:>6.1f} %  {density_bar} {status.label}"
         )
 
     rows.append(separator)
@@ -58,13 +57,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Gate-Flow Co-Pilot — AI crowd-management assistant",
     )
     parser.add_argument(
-        "-m", "--minutes",
+        "-m",
+        "--minutes",
         type=int,
         default=30,
         help="Minutes until kickoff (default: 30)",
     )
     parser.add_argument(
-        "-s", "--seed",
+        "-s",
+        "--seed",
         type=int,
         default=None,
         help="RNG seed for reproducible simulation",
@@ -75,6 +76,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> None:
     """Run the Gate-Flow Co-Pilot CLI.

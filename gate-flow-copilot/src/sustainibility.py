@@ -10,7 +10,12 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-ZONES: tuple[str, ...] = ("East Concourse", "West Concourse", "North Upper", "South Upper")
+ZONES: tuple[str, ...] = (
+    "East Concourse",
+    "West Concourse",
+    "North Upper",
+    "South Upper",
+)
 BIN_TYPES: tuple[str, ...] = ("Recycling", "Compost", "Landfill")
 
 

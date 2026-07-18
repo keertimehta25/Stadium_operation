@@ -46,9 +46,7 @@ def find_section(section_name: str) -> SectionInfo | None:
     return None
 
 
-def recommend_gate_for_section(
-    section_name: str, gate_statuses: list[GateStatus]
-) -> dict:
+def recommend_gate_for_section(section_name: str, gate_statuses: list[GateStatus]) -> dict:
     """Recommend the best entry gate for a fan in a given seating section.
 
     Checks the section's primary (nearest) gate first. If that gate is

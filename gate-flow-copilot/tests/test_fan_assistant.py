@@ -46,20 +46,14 @@ class TestFindSection:
 class TestRecommendGateForSection:
     """Tests for the section-to-gate recommendation logic."""
 
-    def test_unknown_section_returns_error(
-        self, all_low_statuses: list[GateStatus]
-    ) -> None:
+    def test_unknown_section_returns_error(self, all_low_statuses: list[GateStatus]) -> None:
         """An unrecognized section should produce an error key."""
         result = recommend_gate_for_section("Nowhere", all_low_statuses)
         assert "error" in result
 
-    def test_recommends_primary_gate_when_clear(
-        self, all_low_statuses: list[GateStatus]
-    ) -> None:
+    def test_recommends_primary_gate_when_clear(self, all_low_statuses: list[GateStatus]) -> None:
         """When the nearest gate is clear, it should be recommended as-is."""
-        result = recommend_gate_for_section(
-            "100-114 (East Lower)", all_low_statuses
-        )
+        result = recommend_gate_for_section("100-114 (East Lower)", all_low_statuses)
         assert result["gate"] == "Gate A"
         assert "error" not in result
 
@@ -67,18 +61,12 @@ class TestRecommendGateForSection:
         self, gate_a_congested_statuses: list[GateStatus]
     ) -> None:
         """When the nearest gate is congested, the alternate should be used."""
-        result = recommend_gate_for_section(
-            "100-114 (East Lower)", gate_a_congested_statuses
-        )
+        result = recommend_gate_for_section("100-114 (East Lower)", gate_a_congested_statuses)
         assert result["gate"] == "Gate E"  # configured alternate for this section
         assert "Gate A" in result["reason"]
 
-    def test_includes_wait_estimate(
-        self, all_low_statuses: list[GateStatus]
-    ) -> None:
+    def test_includes_wait_estimate(self, all_low_statuses: list[GateStatus]) -> None:
         """Result should always include a plain-language wait estimate."""
-        result = recommend_gate_for_section(
-            "200s (Club Level)", all_low_statuses
-        )
+        result = recommend_gate_for_section("200s (Club Level)", all_low_statuses)
         assert "wait_estimate" in result
         assert isinstance(result["wait_estimate"], str)

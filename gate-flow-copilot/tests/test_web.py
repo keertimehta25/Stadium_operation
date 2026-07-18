@@ -32,6 +32,7 @@ def client():
 # _parse_minutes
 # ---------------------------------------------------------------------------
 
+
 class TestParseMinutes:
     """Tests for clamping the minutes-to-kickoff query parameter."""
 
@@ -51,6 +52,7 @@ class TestParseMinutes:
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 class TestIndexRoute:
     """Tests for the dashboard shell route."""
@@ -104,9 +106,7 @@ class TestApiFanGateRoute:
 
     def test_valid_section_returns_200(self, client) -> None:
         """A recognized section should return a recommendation."""
-        response = client.get(
-            "/api/fan-gate?section=100-114 (East Lower)&minutes=30&seed=1"
-        )
+        response = client.get("/api/fan-gate?section=100-114 (East Lower)&minutes=30&seed=1")
         assert response.status_code == 200
         payload = response.get_json()
         assert "gate" in payload

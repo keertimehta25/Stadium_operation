@@ -25,6 +25,7 @@ _translation_cache: dict[tuple[str, str], str] = {}
 # Translation helpers
 # ---------------------------------------------------------------------------
 
+
 def _translate_text(text: str, target_language: str) -> str:
     """Translate *text* into *target_language* via the Gemini API.
 
@@ -52,9 +53,7 @@ def _translate_text(text: str, target_language: str) -> str:
     )
 
     if not response or not response.text:
-        raise RuntimeError(
-            f"Gemini API returned an empty response for {target_language}."
-        )
+        raise RuntimeError(f"Gemini API returned an empty response for {target_language}.")
 
     return response.text.strip()
 
@@ -86,8 +85,9 @@ def translate_recommendation(
             text = _translate_text(recommendation, language)
             _translation_cache[cache_key] = text
             return language, text
-        except Exception:
-            # Graceful degradation: skip this language on failure
+        except Exception:  # pylint: disable=broad-exception-caught
+            # Graceful degradation: skip this language on failure. Broad
+            # on purpose so one bad translation never blocks the others.
             return language, None
 
     # Run the (uncached) API calls concurrently instead of sequentially —

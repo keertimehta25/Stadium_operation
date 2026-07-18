@@ -38,6 +38,7 @@ class GateStatus:
 # Core simulation helpers (pure functions, O(1) per gate)
 # ---------------------------------------------------------------------------
 
+
 def _kickoff_multiplier(minutes_to_kickoff: int) -> float:
     """Return a crowd-surge multiplier based on time remaining.
 
@@ -94,6 +95,7 @@ def _base_density_for_gate(gate: GateInfo) -> float:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def simulate_gate_densities(
     minutes_to_kickoff: int,

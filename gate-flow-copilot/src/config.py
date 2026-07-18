@@ -25,8 +25,7 @@ def get_api_key() -> str:
     key: str | None = os.getenv("GENAI_API_KEY")
     if not key:
         raise EnvironmentError(
-            "GENAI_API_KEY is not set. "
-            "Copy .env.example to .env and add your key."
+            "GENAI_API_KEY is not set. Copy .env.example to .env and add your key."
         )
     return key
 
@@ -50,11 +49,11 @@ class GateInfo:
 # MetLife Stadium gates (publicly documented gate zones A–D plus VIP/media).
 # Capacities are realistic estimates based on typical NFL/FIFA venue throughput.
 GATES: tuple[GateInfo, ...] = (
-    GateInfo(name="Gate A", zone="East – Lower Level",  capacity=3_000),
-    GateInfo(name="Gate B", zone="West – Lower Level",  capacity=3_200),
-    GateInfo(name="Gate C", zone="North – Upper Level",  capacity=2_800),
-    GateInfo(name="Gate D", zone="South – Upper Level",  capacity=2_800),
-    GateInfo(name="Gate E", zone="Northeast – Club",     capacity=1_500),
+    GateInfo(name="Gate A", zone="East – Lower Level", capacity=3_000),
+    GateInfo(name="Gate B", zone="West – Lower Level", capacity=3_200),
+    GateInfo(name="Gate C", zone="North – Upper Level", capacity=2_800),
+    GateInfo(name="Gate D", zone="South – Upper Level", capacity=2_800),
+    GateInfo(name="Gate E", zone="Northeast – Club", capacity=1_500),
     GateInfo(name="VIP Gate", zone="West – VIP Entrance", capacity=800),
 )
 
@@ -63,7 +62,7 @@ GATE_NAMES: tuple[str, ...] = tuple(g.name for g in GATES)
 # ---------------------------------------------------------------------------
 # Crowd-density thresholds (percentage, 0-100)
 # ---------------------------------------------------------------------------
-DENSITY_LOW: int = 40       # ≤ 40 % → comfortable
+DENSITY_LOW: int = 40  # ≤ 40 % → comfortable
 DENSITY_MODERATE: int = 70  # 41-70 % → busy
 # > 70 % → congested / redirect fans
 

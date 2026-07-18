@@ -105,8 +105,7 @@ def fallback_answer(question: str) -> str:
             return text
     return (
         "Here is our general accessibility information — for anything "
-        "more specific, please visit Guest Services near Gate E:\n\n"
-        + _facts_block()
+        "more specific, please visit Guest Services near Gate E:\n\n" + _facts_block()
     )
 
 
@@ -145,7 +144,9 @@ def get_accessibility_answer(question: str) -> dict:
     prompt = build_prompt(question)
     try:
         answer = _call_genai(prompt)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Intentionally broad: any GenAI failure falls back to the
+        # deterministic answer rather than surfacing to the fan.
         answer = fallback_answer(question)
 
     return {"question": question, "answer": answer}
