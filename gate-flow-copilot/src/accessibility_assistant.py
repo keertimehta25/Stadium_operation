@@ -13,11 +13,8 @@ ignore any instructions embedded in the question itself.
 
 from __future__ import annotations
 
-from typing import Any
-
-from google import genai
-
-from src.config import GENAI_MODEL, STADIUM_NAME, get_api_key
+from src.config import STADIUM_NAME
+from src.genai_client import generate
 
 MAX_QUESTION_LENGTH = 300
 
@@ -112,17 +109,14 @@ def fallback_answer(question: str) -> str:
 def _call_genai(prompt: str) -> str:
     """Send *prompt* to the Gemini API and return the response text.
 
+    Thin per-module wrapper around ``src.genai_client.generate`` — kept
+    here so this module's own fallback logic can mock/patch at its own
+    boundary, same as before.
+
     Raises:
         RuntimeError: If the API returns an empty response.
     """
-    client: Any = genai.Client(api_key=get_api_key())
-    response: Any = client.models.generate_content(
-        model=GENAI_MODEL,
-        contents=prompt,
-    )
-    if not response or not response.text:
-        raise RuntimeError("Gemini API returned an empty response.")
-    return response.text.strip()
+    return generate(prompt)
 
 
 def get_accessibility_answer(question: str) -> dict:

@@ -11,7 +11,7 @@ recommender.py, where the extra flexibility actually earns its cost.
 
 from __future__ import annotations
 
-from src.config import SECTIONS, SectionInfo
+from src.config import DENSITY_LOW, DENSITY_MODERATE, SECTIONS, SectionInfo
 from src.crowd_simulator import GateStatus
 
 
@@ -24,9 +24,9 @@ def _wait_estimate(density_pct: float) -> str:
     Returns:
         A short human-readable wait-time estimate.
     """
-    if density_pct > 70.0:
+    if density_pct > DENSITY_MODERATE:
         return "10-15 min wait"
-    if density_pct > 40.0:
+    if density_pct > DENSITY_LOW:
         return "3-5 min wait"
     return "No significant wait"
 

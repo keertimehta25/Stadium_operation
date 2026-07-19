@@ -10,12 +10,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
 
-from google import genai
-
-from src.config import DENSITY_LOW, DENSITY_MODERATE, GENAI_MODEL, STADIUM_NAME, get_api_key
+from src.config import DENSITY_LOW, DENSITY_MODERATE, STADIUM_NAME
 from src.crowd_simulator import GateStatus
+from src.genai_client import generate
 
 # ---------------------------------------------------------------------------
 # Prompt construction (pure, testable)
@@ -130,6 +128,11 @@ _recommendation_cache: dict[str, str] = {}
 def _call_genai(prompt: str) -> str:
     """Send *prompt* to the Gemini API and return the response text.
 
+    Thin per-module wrapper around ``src.genai_client.generate`` — kept
+    here (rather than calling the shared helper directly from
+    ``get_recommendation``) so this module's own fallback logic can
+    mock/patch at its own boundary, same as before.
+
     Args:
         prompt: The fully formatted prompt.
 
@@ -139,16 +142,7 @@ def _call_genai(prompt: str) -> str:
     Raises:
         RuntimeError: If the API returns an empty or unusable response.
     """
-    client: Any = genai.Client(api_key=get_api_key())
-    response: Any = client.models.generate_content(
-        model=GENAI_MODEL,
-        contents=prompt,
-    )
-
-    if not response or not response.text:
-        raise RuntimeError("Gemini API returned an empty response.")
-
-    return response.text.strip()
+    return generate(prompt)
 
 
 def get_recommendation(gate_statuses: list[GateStatus]) -> str:

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import os
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
+from flask.typing import ResponseReturnValue
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -46,7 +47,7 @@ limiter = Limiter(
 
 
 @app.after_request
-def _set_security_headers(response):
+def _set_security_headers(response: Response) -> Response:
     """Attach baseline security headers to every response."""
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -98,7 +99,7 @@ def index() -> str:
 
 @app.get("/api/status")
 @limiter.limit("20 per minute")
-def api_status():
+def api_status() -> ResponseReturnValue:
     """Return a fresh gate-status + recommendation snapshot as JSON."""
     minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
     seed = request.args.get("seed", default=None, type=int)
@@ -106,13 +107,13 @@ def api_status():
 
 
 @app.get("/api/sections")
-def api_sections():
+def api_sections() -> ResponseReturnValue:
     """Return the list of configured seating sections."""
     return jsonify([s.section for s in SECTIONS])
 
 
 @app.get("/api/fan-gate")
-def api_fan_gate():
+def api_fan_gate() -> ResponseReturnValue:
     """Recommend the best entry gate for a fan's seating section."""
     section = request.args.get("section", default="", type=str)
     minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
@@ -126,7 +127,7 @@ def api_fan_gate():
 
 
 @app.get("/api/transport")
-def api_transport():
+def api_transport() -> ResponseReturnValue:
     """Recommend a transportation mode for arriving at or leaving the venue."""
     minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
     post_match = request.args.get("post_match", default="false", type=str).lower() == "true"
@@ -134,7 +135,7 @@ def api_transport():
 
 
 @app.get("/api/sustainability")
-def api_sustainability():
+def api_sustainability() -> ResponseReturnValue:
     """Return current bin fill levels and a sustainability tip."""
     seed = request.args.get("seed", default=None, type=int)
     statuses = simulate_bin_levels(seed)
@@ -147,7 +148,7 @@ def api_sustainability():
 
 
 @app.get("/api/pois")
-def api_pois():
+def api_pois() -> ResponseReturnValue:
     """Return points of interest (restrooms, medical, elevators, etc.)."""
     category = request.args.get("category", default=None, type=str)
     pois = find_pois(category)
@@ -167,7 +168,7 @@ def api_pois():
 
 @app.get("/api/navigate")
 @limiter.limit("20 per minute")
-def api_navigate():
+def api_navigate() -> ResponseReturnValue:
     """Return GenAI-generated wayfinding directions between two locations.
 
     Directions factor in live gate congestion near the destination, so
@@ -189,7 +190,7 @@ def api_navigate():
 
 @app.post("/api/accessibility")
 @limiter.limit("15 per minute")
-def api_accessibility():
+def api_accessibility() -> ResponseReturnValue:
     """Answer a free-text accessibility question, grounded in venue facts."""
     payload = request.get_json(silent=True) or {}
     question = _clean_text(str(payload.get("question", "")), 300)
@@ -199,13 +200,13 @@ def api_accessibility():
 
 
 @app.errorhandler(404)
-def not_found(_err):
+def not_found(_err: Exception) -> ResponseReturnValue:
     """Return a clean JSON 404 instead of Flask's default HTML page."""
     return jsonify({"error": "Not found"}), 404
 
 
 @app.errorhandler(500)
-def server_error(_err):
+def server_error(_err: Exception) -> ResponseReturnValue:
     """Return a clean JSON 500 without leaking internal stack traces."""
     return jsonify({"error": "Internal server error"}), 500
 

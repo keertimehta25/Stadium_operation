@@ -7,11 +7,9 @@ Gemini API, falling back to English-only output on any failure.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
-from google import genai
-
-from src.config import GENAI_MODEL, SUPPORTED_LANGUAGES, get_api_key
+from src.config import SUPPORTED_LANGUAGES
+from src.genai_client import generate
 
 # Cache of (source_text, target_language) -> translated text. The same
 # recommendation string is often requested repeatedly within a short
@@ -32,6 +30,12 @@ _translation_cache: dict[tuple[str, str], str] = {}
 def _translate_text(text: str, target_language: str) -> str:
     """Translate *text* into *target_language* via the Gemini API.
 
+    Thin per-module wrapper around ``src.genai_client.generate`` — kept
+    here (rather than calling the shared helper directly from
+    ``translate_recommendation``) so this module builds its own prompt
+    and can attach the target language to the error message, while the
+    actual API call is de-duplicated in one shared place.
+
     Args:
         text: The English source text.
         target_language: The language name (e.g. ``"Spanish"``).
@@ -42,23 +46,16 @@ def _translate_text(text: str, target_language: str) -> str:
     Raises:
         RuntimeError: If the API returns an empty response.
     """
-    client: Any = genai.Client(api_key=get_api_key())
-
     prompt: str = (
         f"Translate the following crowd-management recommendation into "
         f"{target_language}. Keep the meaning exact and the language simple "
         f"so a stadium volunteer can understand it easily.\n\n"
         f"---\n{text}\n---"
     )
-    response: Any = client.models.generate_content(
-        model=GENAI_MODEL,
-        contents=prompt,
-    )
-
-    if not response or not response.text:
-        raise RuntimeError(f"Gemini API returned an empty response for {target_language}.")
-
-    return response.text.strip()
+    try:
+        return generate(prompt)
+    except RuntimeError as exc:
+        raise RuntimeError(f"Gemini API returned an empty response for {target_language}.") from exc
 
 
 def translate_recommendation(

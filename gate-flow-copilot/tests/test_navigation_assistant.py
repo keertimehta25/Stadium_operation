@@ -116,24 +116,17 @@ class TestGetDirections:
         assert isinstance(result, dict)
 
 
-class TestCallGenaiClient:
-    """Tests for _call_genai's direct genai.Client interaction."""
+class TestCallGenaiDelegation:
+    """_call_genai should simply delegate to the shared genai_client.generate."""
 
-    @patch("src.navigation_assistant.genai.Client")
-    def test_returns_stripped_text_on_success(self, mock_client_cls, monkeypatch) -> None:
-        monkeypatch.setenv("GENAI_API_KEY", "test-key")
-        mock_response = MagicMock()
-        mock_response.text = "  Head toward Gate C.  "
-        mock_client_cls.return_value.models.generate_content.return_value = mock_response
+    @patch("src.navigation_assistant.generate")
+    def test_delegates_to_shared_generate(self, mock_generate) -> None:
+        mock_generate.return_value = "Head toward Gate C."
 
         assert _call_genai("some prompt") == "Head toward Gate C."
+        mock_generate.assert_called_once_with("some prompt")
 
-    @patch("src.navigation_assistant.genai.Client")
-    def test_raises_on_empty_response(self, mock_client_cls, monkeypatch) -> None:
-        monkeypatch.setenv("GENAI_API_KEY", "test-key")
-        mock_response = MagicMock()
-        mock_response.text = ""
-        mock_client_cls.return_value.models.generate_content.return_value = mock_response
-
+    @patch("src.navigation_assistant.generate", side_effect=RuntimeError("empty"))
+    def test_propagates_errors(self, _mock_generate) -> None:
         with pytest.raises(RuntimeError):
             _call_genai("some prompt")

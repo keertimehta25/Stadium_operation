@@ -11,7 +11,23 @@ import math
 import random
 from dataclasses import dataclass
 
-from src.config import GATES, GateInfo
+from src.config import DENSITY_LOW, DENSITY_MODERATE, GATES, GateInfo
+
+# ---------------------------------------------------------------------------
+# Simulation tuning constants
+# ---------------------------------------------------------------------------
+# These were previously inline magic numbers; each is named here so the
+# model's behavior can be tuned in one place and the intent of each value
+# is explicit at the call site rather than only in a comment.
+MIN_CROWD_MULTIPLIER = 0.2  # trickle-in rate far before kickoff
+MAX_CROWD_MULTIPLIER = 1.0  # peak surge rate right before kickoff
+KICKOFF_CURVE_MIDPOINT_MINUTES = 45  # logistic curve center
+KICKOFF_CURVE_STEEPNESS = 0.08  # logistic curve steepness
+INFLOW_NOISE_SIGMA = 5.0  # std-dev of per-gate random perturbation
+MIN_DENSITY_PCT = 0.0
+MAX_DENSITY_PCT = 100.0
+CAPACITY_BUFFER_FACTOR = 1.2  # headroom applied when scaling by gate capacity
+BASE_DENSITY_SCALE = 50.0  # max base density attributable to capacity alone
 
 
 # ---------------------------------------------------------------------------
@@ -27,9 +43,9 @@ class GateStatus:
     @property
     def label(self) -> str:
         """Return a human-readable congestion label."""
-        if self.density_pct <= 40.0:
+        if self.density_pct <= DENSITY_LOW:
             return "Low"
-        if self.density_pct <= 70.0:
+        if self.density_pct <= DENSITY_MODERATE:
             return "Moderate"
         return "High"
 
@@ -55,10 +71,14 @@ def _kickoff_multiplier(minutes_to_kickoff: int) -> float:
         A multiplier in [0.2, 1.0].
     """
     if minutes_to_kickoff <= 0:
-        return 1.0
-    # Logistic curve centred at 45 minutes, steepness factor 0.08
-    raw: float = 1.0 / (1.0 + math.exp(0.08 * (minutes_to_kickoff - 45)))
-    return max(0.2, min(raw, 1.0))
+        return MAX_CROWD_MULTIPLIER
+    # Logistic curve centred at KICKOFF_CURVE_MIDPOINT_MINUTES minutes,
+    # steepness factor KICKOFF_CURVE_STEEPNESS
+    raw: float = 1.0 / (
+        1.0
+        + math.exp(KICKOFF_CURVE_STEEPNESS * (minutes_to_kickoff - KICKOFF_CURVE_MIDPOINT_MINUTES))
+    )
+    return max(MIN_CROWD_MULTIPLIER, min(raw, MAX_CROWD_MULTIPLIER))
 
 
 def _random_inflow(rng: random.Random, base_density: float) -> float:
@@ -71,8 +91,8 @@ def _random_inflow(rng: random.Random, base_density: float) -> float:
     Returns:
         Perturbed density clamped to [0.0, 100.0].
     """
-    noise: float = rng.gauss(mu=0.0, sigma=5.0)
-    return max(0.0, min(100.0, base_density + noise))
+    noise: float = rng.gauss(mu=0.0, sigma=INFLOW_NOISE_SIGMA)
+    return max(MIN_DENSITY_PCT, min(MAX_DENSITY_PCT, base_density + noise))
 
 
 def _base_density_for_gate(gate: GateInfo) -> float:
@@ -89,7 +109,7 @@ def _base_density_for_gate(gate: GateInfo) -> float:
     """
     max_capacity: int = max(g.capacity for g in GATES)
     # Inverse relationship: smaller capacity → higher base density
-    return 50.0 * (1.0 - gate.capacity / (max_capacity * 1.2))
+    return BASE_DENSITY_SCALE * (1.0 - gate.capacity / (max_capacity * CAPACITY_BUFFER_FACTOR))
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +147,7 @@ def simulate_gate_densities(
     statuses: list[GateStatus] = []
     for gate in GATES:
         base: float = _base_density_for_gate(gate)
-        scaled: float = base + (100.0 - base) * multiplier
+        scaled: float = base + (MAX_DENSITY_PCT - base) * multiplier
         density: float = _random_inflow(rng, scaled)
         statuses.append(GateStatus(gate=gate, density_pct=round(density, 1)))
 

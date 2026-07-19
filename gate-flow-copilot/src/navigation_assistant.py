@@ -10,12 +10,10 @@ deterministic rule-based fallback so the feature never goes dark.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
-from google import genai
-
-from src.config import GENAI_MODEL, SECTIONS, STADIUM_NAME, get_api_key
+from src.config import SECTIONS, STADIUM_NAME
 from src.crowd_simulator import GateStatus
+from src.genai_client import generate
 
 
 # ---------------------------------------------------------------------------
@@ -230,17 +228,14 @@ def fallback_navigation(
 def _call_genai(prompt: str) -> str:
     """Send *prompt* to the Gemini API and return the response text.
 
+    Thin per-module wrapper around ``src.genai_client.generate`` — kept
+    here so this module's own fallback logic can mock/patch at its own
+    boundary, same as before.
+
     Raises:
         RuntimeError: If the API returns an empty response.
     """
-    client: Any = genai.Client(api_key=get_api_key())
-    response: Any = client.models.generate_content(
-        model=GENAI_MODEL,
-        contents=prompt,
-    )
-    if not response or not response.text:
-        raise RuntimeError("Gemini API returned an empty response.")
-    return response.text.strip()
+    return generate(prompt)
 
 
 def get_directions(

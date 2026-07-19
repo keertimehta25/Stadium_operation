@@ -18,6 +18,10 @@ ZONES: tuple[str, ...] = (
 )
 BIN_TYPES: tuple[str, ...] = ("Recycling", "Compost", "Landfill")
 
+MIN_SIMULATED_FILL_PCT = 10.0
+MAX_SIMULATED_FILL_PCT = 95.0
+OVERFLOW_RISK_THRESHOLD_PCT = 80.0
+
 
 @dataclass(frozen=True)
 class BinStatus:
@@ -39,7 +43,11 @@ def simulate_bin_levels(seed: int | None = None) -> list[BinStatus]:
     """
     rng = random.Random(seed)
     return [
-        BinStatus(zone=zone, bin_type=bin_type, fill_pct=round(rng.uniform(10.0, 95.0), 1))
+        BinStatus(
+            zone=zone,
+            bin_type=bin_type,
+            fill_pct=round(rng.uniform(MIN_SIMULATED_FILL_PCT, MAX_SIMULATED_FILL_PCT), 1),
+        )
         for zone in ZONES
         for bin_type in BIN_TYPES
     ]
@@ -54,7 +62,7 @@ def sustainability_tip(statuses: list[BinStatus]) -> str:
     Returns:
         A short, actionable tip for venue staff.
     """
-    full_bins = [s for s in statuses if s.fill_pct > 80.0]
+    full_bins = [s for s in statuses if s.fill_pct > OVERFLOW_RISK_THRESHOLD_PCT]
     if not full_bins:
         return "All bins are within normal capacity. No action needed."
 

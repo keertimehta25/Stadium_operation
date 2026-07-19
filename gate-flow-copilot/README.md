@@ -15,9 +15,30 @@ Every GenAI-backed feature (recommendations, navigation, translation, accessibil
 ## Architecture
 
 ```
+Fan / Volunteer (browser)
+        │
+        ▼
+  React frontend (frontend/)
+        │  fetch /api/*
+        ▼
+  Flask API (src/web.py)
+        │
+        ├── src/crowd_simulator.py    (gate density simulation)
+        ├── src/recommender.py         (volunteer recommendation: GenAI + fallback)
+        ├── src/navigation_assistant.py (fan wayfinding: GenAI + fallback)
+        ├── src/accessibility_assistant.py (Q&A: GenAI + fallback)
+        ├── src/translator.py           (multilingual output: GenAI + fallback)
+        ├── src/fan_assistant.py         (rule-based gate lookup)
+        ├── src/transport_assistant.py (rule-based transport advice)
+        ├── src/sustainability.py        (bin levels + tips)
+        └── src/genai_client.py           (single shared Gemini API call)
+```
+
+```
 src/
   config.py                  # Stadium/gate/section constants, API key loading, shared GenAI model name
   crowd_simulator.py          # Deterministic-when-seeded gate density simulation
+  genai_client.py               # Single shared low-level Gemini API call
   recommender.py               # Volunteer-facing GenAI recommendation + rule-based fallback
   translator.py                 # Concurrent multi-language translation + fallback
   navigation_assistant.py    # Fan wayfinding, congestion-aware, GenAI + fallback
@@ -32,6 +53,14 @@ tests/                          # pytest suite, one file per src module
 ```
 
 Each GenAI-backed module owns its own `_call_genai` wrapper (rather than one shared helper) so a failure in one assistant is isolated from the others and each can be mocked independently in tests — a deliberate tradeoff documented in `pyproject.toml`. All modules share a single `GENAI_MODEL` constant from `config.py` so upgrading models is a one-line change.
+
+## Assumptions
+
+- **Single venue, single event**: the simulation models one stadium (MetLife) hosting one match at a time — not a multi-venue or multi-day festival scenario.
+- **Simulated, not live, gate data**: `crowd_simulator.py` generates realistic-looking density numbers from time-to-kickoff and gate capacity rather than reading real turnstile or camera sensor feeds, since no live venue data source was available for this challenge.
+- **English as the source language**: all GenAI-generated text (recommendations, navigation, accessibility answers) is produced in English first, then translated on request — there's no assumption that any one language is the fan's native language beyond that starting point.
+- **Single-instance deployment by default**: rate limiting and caching use in-memory storage, which is correct for a single-process demo deployment; a multi-instance production deployment would need `REDIS_URL` set (already supported) for both to work correctly across instances.
+- **Fallback quality is "good enough," not identical**: when the GenAI API is unavailable, each assistant falls back to deterministic, rule-based text. That fallback text is clear and correct but intentionally simpler than what the model would produce — the goal is that the tool never goes silent, not that the fallback is indistinguishable from the AI output.
 
 ## Running it
 

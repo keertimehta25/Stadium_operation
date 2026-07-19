@@ -8,6 +8,9 @@ test without any external API or GenAI call.
 
 from __future__ import annotations
 
+EARLY_ARRIVAL_MINUTES = 90  # beyond this, lots/platforms are still quiet
+LATE_ARRIVAL_MINUTES = 30  # inside this, roads/platforms are congested
+
 
 def recommend_transport(minutes_to_kickoff: int, post_match: bool = False) -> dict:
     """Recommend a transportation mode for arriving at or leaving the stadium.
@@ -33,13 +36,13 @@ def recommend_transport(minutes_to_kickoff: int, post_match: bool = False) -> di
             ),
         }
 
-    if minutes_to_kickoff > 90:
+    if minutes_to_kickoff > EARLY_ARRIVAL_MINUTES:
         return {
             "mode": "Rideshare / Drive",
             "wait_estimate": "No queue",
             "note": "Parking lots are still open with plenty of space this early.",
         }
-    if minutes_to_kickoff > 30:
+    if minutes_to_kickoff > LATE_ARRIVAL_MINUTES:
         return {
             "mode": "Rail / Transit",
             "wait_estimate": "5-10 min",

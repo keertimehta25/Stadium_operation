@@ -93,26 +93,21 @@ class TestFormatMultilingualOutput:
         assert output == ""
 
 
-class TestTranslateTextGenaiClient:
-    """Tests for _translate_text's direct genai.Client interaction."""
+class TestTranslateTextDelegation:
+    """_translate_text builds the prompt then delegates to genai_client.generate."""
 
-    @patch("src.translator.genai.Client")
-    def test_returns_stripped_text_on_success(self, mock_client_cls, monkeypatch) -> None:
-        monkeypatch.setenv("GENAI_API_KEY", "test-key")
-        mock_response = MagicMock()
-        mock_response.text = "  Ve a la Puerta D.  "
-        mock_client_cls.return_value.models.generate_content.return_value = mock_response
+    @patch("src.translator.generate")
+    def test_delegates_to_shared_generate(self, mock_generate) -> None:
+        mock_generate.return_value = "Ve a la Puerta D."
 
         result = _translate_text("Go to Gate D.", "Spanish")
         assert result == "Ve a la Puerta D."
+        (prompt,), _ = mock_generate.call_args
+        assert "Go to Gate D." in prompt
+        assert "Spanish" in prompt
 
-    @patch("src.translator.genai.Client")
-    def test_raises_on_empty_response(self, mock_client_cls, monkeypatch) -> None:
-        monkeypatch.setenv("GENAI_API_KEY", "test-key")
-        mock_response = MagicMock()
-        mock_response.text = ""
-        mock_client_cls.return_value.models.generate_content.return_value = mock_response
-
+    @patch("src.translator.generate", side_effect=RuntimeError("empty"))
+    def test_raises_with_language_in_message(self, _mock_generate) -> None:
         try:
             _translate_text("Go to Gate D.", "Spanish")
             assert False, "expected RuntimeError"
