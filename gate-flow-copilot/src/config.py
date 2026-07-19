@@ -21,6 +21,11 @@ load_dotenv()  # reads .env in the project root
 # four-file find-and-replace.
 GENAI_MODEL: str = "gemini-2.0-flash"
 
+# Default "minutes to kickoff" used by both the CLI (--minutes default) and
+# every web.py route that accepts a ?minutes= query param, so the two entry
+# points can't silently drift apart on what "no input given" means.
+DEFAULT_MINUTES_TO_KICKOFF: int = 30
+
 
 def get_api_key() -> str:
     """Return the GenAI API key from the environment.

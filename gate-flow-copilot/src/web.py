@@ -16,7 +16,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from src.accessibility_assistant import get_accessibility_answer
-from src.config import SECTIONS, STADIUM_NAME
+from src.config import DEFAULT_MINUTES_TO_KICKOFF, SECTIONS, STADIUM_NAME
 from src.crowd_simulator import GateStatus, simulate_gate_densities
 from src.fan_assistant import recommend_gate_for_section
 from src.navigation_assistant import find_pois, get_directions
@@ -101,7 +101,9 @@ def index() -> str:
 @limiter.limit("20 per minute")
 def api_status() -> ResponseReturnValue:
     """Return a fresh gate-status + recommendation snapshot as JSON."""
-    minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
+    minutes = _parse_minutes(
+        request.args.get("minutes", default=DEFAULT_MINUTES_TO_KICKOFF, type=int)
+    )
     seed = request.args.get("seed", default=None, type=int)
     return jsonify(build_snapshot(minutes, seed))
 
@@ -116,7 +118,9 @@ def api_sections() -> ResponseReturnValue:
 def api_fan_gate() -> ResponseReturnValue:
     """Recommend the best entry gate for a fan's seating section."""
     section = request.args.get("section", default="", type=str)
-    minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
+    minutes = _parse_minutes(
+        request.args.get("minutes", default=DEFAULT_MINUTES_TO_KICKOFF, type=int)
+    )
     seed = request.args.get("seed", default=None, type=int)
 
     statuses = simulate_gate_densities(minutes_to_kickoff=minutes, seed=seed)
@@ -129,7 +133,9 @@ def api_fan_gate() -> ResponseReturnValue:
 @app.get("/api/transport")
 def api_transport() -> ResponseReturnValue:
     """Recommend a transportation mode for arriving at or leaving the venue."""
-    minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
+    minutes = _parse_minutes(
+        request.args.get("minutes", default=DEFAULT_MINUTES_TO_KICKOFF, type=int)
+    )
     post_match = request.args.get("post_match", default="false", type=str).lower() == "true"
     return jsonify(recommend_transport(minutes, post_match))
 
@@ -183,7 +189,9 @@ def api_navigate() -> ResponseReturnValue:
     if not start or not destination:
         return jsonify({"error": "Both 'start' and 'destination' are required."}), 400
 
-    minutes = _parse_minutes(request.args.get("minutes", default=30, type=int))
+    minutes = _parse_minutes(
+        request.args.get("minutes", default=DEFAULT_MINUTES_TO_KICKOFF, type=int)
+    )
     gate_statuses = simulate_gate_densities(minutes_to_kickoff=minutes)
     return jsonify(get_directions(start, destination, gate_statuses))
 

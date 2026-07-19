@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 
-from src.config import STADIUM_NAME
+from src.config import DEFAULT_MINUTES_TO_KICKOFF, STADIUM_NAME
 from src.crowd_simulator import GateStatus, simulate_gate_densities
 from src.recommender import get_recommendation
 from src.translator import format_multilingual_output, translate_recommendation
@@ -60,7 +60,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-m",
         "--minutes",
         type=int,
-        default=30,
+        default=DEFAULT_MINUTES_TO_KICKOFF,
         help="Minutes until kickoff (default: 30)",
     )
     parser.add_argument(
